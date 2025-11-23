@@ -206,8 +206,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const response = await chrome.tabs.sendMessage(tab.id, { action: 'GET_TIME' });
                     if (response && response.currentTime !== undefined) {
-                        // Capture time 1 second before
-                        noteStartTime = Math.max(0, response.currentTime - 1);
+                        // Capture time 5 seconds before
+                        noteStartTime = Math.max(0, response.currentTime - 5);
                     }
                 } catch (e) {
                     console.log("Could not capture start time on input", e);
