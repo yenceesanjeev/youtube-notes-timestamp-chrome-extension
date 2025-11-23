@@ -69,10 +69,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const noteItem = document.createElement('div');
             noteItem.className = 'note-item';
 
-            const timestamp = document.createElement('div');
+            const timestamp = document.createElement('a');
             timestamp.className = 'note-timestamp';
             timestamp.textContent = formatTime(note.time);
-            timestamp.onclick = () => seekTo(note.time);
+            timestamp.href = `https://www.youtube.com/watch?v=${currentVideoId}&t=${Math.floor(note.time)}s`;
+            timestamp.target = "_blank"; // Good practice for external links, though we prevent default mostly
+
+            timestamp.onclick = (e) => {
+                e.preventDefault();
+                seekTo(note.time);
+            };
 
             const text = document.createElement('div');
             text.className = 'note-text';
@@ -162,6 +168,65 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Add new note button click
     addNoteBtn.addEventListener('click', addNote);
+
+    // Copy notes to clipboard
+    const copyBtn = document.getElementById('copy-notes-btn');
+    copyBtn.addEventListener('click', async () => {
+        if (!currentVideoId) return;
+
+        const storage = await chrome.storage.local.get(currentVideoId);
+        const notes = storage[currentVideoId] || [];
+
+        if (notes.length === 0) {
+            return;
+        }
+
+        // Create plain text version
+        const textContent = notes.map(note => `${formatTime(note.time)} - ${note.text}`).join('\n');
+
+        // Create HTML version with links
+        const htmlContent = notes.map(note => {
+            const time = formatTime(note.time);
+            const url = `https://www.youtube.com/watch?v=${currentVideoId}&t=${Math.floor(note.time)}s`;
+            return `<div><a href="${url}">${time}</a> - ${note.text}</div>`;
+        }).join('');
+
+        try {
+            // Try using the Clipboard API for rich text
+            if (typeof ClipboardItem !== 'undefined') {
+                const blobHtml = new Blob([htmlContent], { type: 'text/html' });
+                const blobText = new Blob([textContent], { type: 'text/plain' });
+                const data = [new ClipboardItem({
+                    'text/html': blobHtml,
+                    'text/plain': blobText
+                })];
+                await navigator.clipboard.write(data);
+            } else {
+                // Fallback for browsers not supporting ClipboardItem (unlikely in modern Chrome but good safety)
+                await navigator.clipboard.writeText(textContent);
+            }
+
+            // Visual feedback
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            // Fallback to plain text if rich copy fails
+            try {
+                await navigator.clipboard.writeText(textContent);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied (Text)!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            } catch (e) {
+                console.error('Fallback failed', e);
+            }
+        }
+    });
 
     // Initial load
     loadNotes();

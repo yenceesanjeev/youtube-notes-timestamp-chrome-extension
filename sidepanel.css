@@ -14,12 +14,32 @@ body {
   box-sizing: border-box;
 }
 
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
 h1 {
   font-size: 20px;
   font-weight: 700;
-  margin-top: 0;
-  margin-bottom: 24px;
+  margin: 0;
   color: #0f0f0f;
+}
+
+#copy-notes-btn {
+  background-color: transparent;
+  color: #0f0f0f;
+  border: 1px solid #e5e5e5;
+  padding: 0 12px;
+  height: 32px;
+  font-size: 13px;
+  align-self: center;
+}
+
+#copy-notes-btn:hover {
+  background-color: #f2f2f2;
 }
 
 #notes-list {
