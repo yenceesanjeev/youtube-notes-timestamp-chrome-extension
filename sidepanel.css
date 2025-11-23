@@ -36,6 +36,8 @@ h1 {
   height: 32px;
   font-size: 13px;
   align-self: center;
+  border-radius: 16px;
+  cursor: pointer;
 }
 
 #copy-notes-btn:hover {
@@ -128,10 +130,6 @@ h1 {
   background-color: #def1ff;
 }
 
-.note-item:last-child {
-  border-bottom: none;
-}
-
 .note-text {
   font-size: 14px;
   line-height: 20px;
@@ -169,6 +167,7 @@ textarea {
   outline: none;
   transition: border-bottom-color 0.2s;
   background: transparent;
+  color: inherit;
 }
 
 textarea:focus {
@@ -179,7 +178,7 @@ textarea::placeholder {
   color: #606060;
 }
 
-button {
+button#add-note-btn {
   background-color: #0f0f0f;
   color: white;
   border: none;
@@ -195,7 +194,7 @@ button {
   /* Align to right */
 }
 
-button:hover {
+button#add-note-btn:hover {
   background-color: #272727;
 }
 
@@ -203,4 +202,89 @@ button:disabled {
   background-color: #f2f2f2;
   color: #909090;
   cursor: default;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0f0f0f;
+    color: #f1f1f1;
+  }
+
+  h1 {
+    color: #f1f1f1;
+  }
+
+  #notes-list {
+    background-color: #0f0f0f;
+  }
+
+  .note-item {
+    border-bottom: 1px solid #303030;
+  }
+
+  .note-item:hover {
+    background-color: #272727;
+  }
+
+  .note-text {
+    color: #f1f1f1;
+  }
+
+  .note-timestamp {
+    color: #3ea6ff;
+    /* YouTube Dark Mode Blue */
+  }
+
+  .note-timestamp:hover {
+    background-color: #263850;
+  }
+
+  .input-area {
+    border-top: 1px solid #303030;
+  }
+
+  textarea {
+    border-bottom: 1px solid #717171;
+    color: #f1f1f1;
+  }
+
+  textarea:focus {
+    border-bottom: 2px solid #f1f1f1;
+  }
+
+  textarea::placeholder {
+    color: #aaaaaa;
+  }
+
+  #copy-notes-btn {
+    color: #f1f1f1;
+    border: 1px solid #303030;
+  }
+
+  #copy-notes-btn:hover {
+    background-color: #303030;
+  }
+
+  button#add-note-btn {
+    background-color: #f1f1f1;
+    color: #0f0f0f;
+  }
+
+  button#add-note-btn:hover {
+    background-color: #d9d9d9;
+  }
+
+  .delete-btn {
+    color: #aaaaaa;
+  }
+
+  .delete-btn:hover {
+    background-color: #303030;
+    color: #f1f1f1;
+  }
+
+  .empty-state {
+    color: #aaaaaa;
+  }
 }
