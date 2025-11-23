@@ -181,11 +181,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        const tab = await getCurrentTab();
+        const videoTitle = tab ? tab.title.replace(' - YouTube', '') : 'YouTube Video';
+
         // Create plain text version
-        const textContent = notes.map(note => `${formatTime(note.time)} - ${note.text}`).join('\n');
+        const textContent = `${videoTitle}\n\n` + notes.map(note => `${formatTime(note.time)} - ${note.text}`).join('\n');
 
         // Create HTML version with links
-        const htmlContent = notes.map(note => {
+        const htmlContent = `<h3>${videoTitle}</h3>` + notes.map(note => {
             const time = formatTime(note.time);
             const url = `https://www.youtube.com/watch?v=${currentVideoId}&t=${Math.floor(note.time)}s`;
             return `<div><a href="${url}">${time}</a> - ${note.text}</div>`;
