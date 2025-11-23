@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addNoteBtn = document.getElementById('add-note-btn');
 
     let currentVideoId = null;
+    let noteStartTime = null;
 
     // Helper to get the current tab
     async function getCurrentTab() {
@@ -57,6 +58,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderNotes(notes);
     }
 
+    // Delete note
+    async function deleteNote(index) {
+        const storage = await chrome.storage.local.get(currentVideoId);
+        let notes = storage[currentVideoId] || [];
+
+        notes.splice(index, 1);
+        await chrome.storage.local.set({ [currentVideoId]: notes });
+        renderNotes(notes);
+    }
+
     // Render notes to the UI
     function renderNotes(notes) {
         notesList.innerHTML = '';
@@ -69,6 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const noteItem = document.createElement('div');
             noteItem.className = 'note-item';
 
+            const header = document.createElement('div');
+            header.className = 'note-header';
+
             const timestamp = document.createElement('a');
             timestamp.className = 'note-timestamp';
             timestamp.textContent = formatTime(note.time);
@@ -80,11 +94,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 seekTo(note.time);
             };
 
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '&times;'; // Multiplication sign as X
+            deleteBtn.title = 'Delete note';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation(); // Prevent triggering other clicks if any
+                if (confirm('Are you sure you want to delete this note?')) {
+                    deleteNote(index);
+                }
+            };
+
+            header.appendChild(timestamp);
+            header.appendChild(deleteBtn);
+
             const text = document.createElement('div');
             text.className = 'note-text';
             text.textContent = note.text;
 
-            noteItem.appendChild(timestamp);
+            noteItem.appendChild(header);
             noteItem.appendChild(text);
             notesList.appendChild(noteItem);
         });
@@ -113,25 +141,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            let response;
-            try {
-                response = await chrome.tabs.sendMessage(tab.id, { action: 'GET_TIME' });
-            } catch (e) {
-                // If message fails, content script might not be loaded (e.g. after extension reload)
-                // Try to inject it dynamically
-                console.log("Initial message failed, attempting injection...", e);
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    files: ['content.js']
-                });
-                // Retry sending message
-                response = await chrome.tabs.sendMessage(tab.id, { action: 'GET_TIME' });
+            let timeToSave;
+
+            // Use captured start time if available, otherwise get current time
+            if (noteStartTime !== null) {
+                timeToSave = noteStartTime;
+            } else {
+                // Fallback if they didn't type (e.g. paste) or something went wrong
+                let response;
+                try {
+                    response = await chrome.tabs.sendMessage(tab.id, { action: 'GET_TIME' });
+                } catch (e) {
+                    await chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        files: ['content.js']
+                    });
+                    response = await chrome.tabs.sendMessage(tab.id, { action: 'GET_TIME' });
+                }
+                if (response && response.currentTime !== undefined) {
+                    timeToSave = response.currentTime;
+                }
             }
 
-            if (response && response.currentTime !== undefined) {
+            if (timeToSave !== undefined) {
                 const newNote = {
                     text: text,
-                    time: response.currentTime,
+                    time: timeToSave,
                     createdAt: Date.now()
                 };
 
@@ -145,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await chrome.storage.local.set({ [currentVideoId]: notes });
 
                 noteInput.value = '';
+                noteStartTime = null; // Reset
                 renderNotes(notes);
             }
         } catch (error) {
@@ -152,6 +188,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert('Please refresh the YouTube page to enable the extension.');
         }
     }
+
+    // Capture time when user starts typing
+    noteInput.addEventListener('input', async () => {
+        const text = noteInput.value.trim();
+
+        // If user cleared the input, reset time
+        if (text.length === 0) {
+            noteStartTime = null;
+            return;
+        }
+
+        // If this is the first character (or we haven't captured time yet)
+        if (noteStartTime === null) {
+            const tab = await getCurrentTab();
+            if (tab && tab.id) {
+                try {
+                    const response = await chrome.tabs.sendMessage(tab.id, { action: 'GET_TIME' });
+                    if (response && response.currentTime !== undefined) {
+                        // Capture time 1 second before
+                        noteStartTime = Math.max(0, response.currentTime - 1);
+                    }
+                } catch (e) {
+                    console.log("Could not capture start time on input", e);
+                }
+            }
+        }
+    });
 
     // Handle Enter key to submit, Cmd/Ctrl+Enter for new line
     noteInput.addEventListener('keydown', (e) => {

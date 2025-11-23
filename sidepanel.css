@@ -74,14 +74,19 @@ h1 {
   padding: 12px 0;
   border-bottom: 1px solid #e5e5e5;
   transition: background-color 0.2s;
+  position: relative;
+  /* For absolute positioning of delete btn if needed, or just flex */
 }
 
 .note-item:hover {
   background-color: #f9f9f9;
 }
 
-.note-item:last-child {
-  border-bottom: none;
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .note-timestamp {
@@ -90,15 +95,41 @@ h1 {
   /* YouTube Blue */
   cursor: pointer;
   font-weight: 500;
-  margin-bottom: 4px;
-  align-self: flex-start;
   padding: 2px 8px;
   border-radius: 2px;
   text-decoration: none;
 }
 
+.delete-btn {
+  background: none;
+  border: none;
+  color: #606060;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 50%;
+  opacity: 0;
+  /* Hidden by default */
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.note-item:hover .delete-btn {
+  opacity: 1;
+  /* Show on hover */
+}
+
+.delete-btn:hover {
+  background-color: #e5e5e5;
+  color: #0f0f0f;
+}
+
 .note-timestamp:hover {
   background-color: #def1ff;
+}
+
+.note-item:last-child {
+  border-bottom: none;
 }
 
 .note-text {
